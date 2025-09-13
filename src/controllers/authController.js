@@ -10,6 +10,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: "Este e-mail já está em uso." });
     }
 
+    //no futuro, desestruturar o req.body para remover o role uma vez que atualmente, qualquer pessoa pode se cadastrar como funcionario
     const user = await User.create(req.body);
 
     // remove a senha da resposta para não expor
@@ -25,14 +26,12 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // busca o usuário pelo email (e inclui a senha na busca)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-    // usa bcrypt.compare() para verificar se a senha está correta
     const isPasswordRight = await bcrypt.compare(password, user.password);
 
     if (!isPasswordRight) {
