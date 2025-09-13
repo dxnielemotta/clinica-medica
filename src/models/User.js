@@ -8,9 +8,11 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ["patient", "secretary"], default: "patient" },
   address: {
     cep: String,
-    street: String,
-    city: String,
-    state: String,
+    logradouro: String,
+    numero: String,
+    bairro: String,
+    localidade: String,
+    uf: String,
   },
   createdAt: { type: Date, default: Date.now },
 });

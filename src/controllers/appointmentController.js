@@ -1,5 +1,6 @@
 import Appointment from "../models/Appointment.js";
 import { startOfDay, endOfDay, parse, isValid, format } from "date-fns";
+import User from "../models/User.js";
 
 export const createAppointment = async (req, res) => {
   try {
@@ -42,16 +43,57 @@ export const createAppointment = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     const { userRole, userId } = req;
-    let appointments;
+    let appointmentsQuery;
+
     if (userRole === "secretary") {
-      //funcionario pode ver todos os agendamentos
-      appointments = await Appointment.find().populate("patient", "name email");
+      // populamos o endereço completo do paciente para pegar a cidade.
+      appointmentsQuery = Appointment.find().populate("patient", "name email address").sort({ date: "asc" });
     } else {
-      //paciente só pode ver o seu próprio agendamento
-      appointments = await Appointment.find({ patient: userId });
+      // paciente só vê os seus próprios agendamentos.
+      appointmentsQuery = Appointment.find({ patient: userId }).sort({ date: "asc" });
     }
 
-    return res.status(200).json(appointments);
+    const appointments = await appointmentsQuery;
+
+    const appointmentsWithWeather = await Promise.all(
+      appointments.map(async (appointment) => {
+        const appointmentObject = appointment.toObject(); // converte o documento do Mongoose para um objeto JS
+        let city = null;
+
+        // tenta obter a cidade do paciente
+        if (userRole === "secretary" && appointment.patient.address) {
+          city = appointment.patient.address.city;
+        } else if (userRole === "patient") {
+          // se for paciente, precisamos buscar os dados do próprio usuário
+          const patientData = await User.findById(userId);
+          if (patientData && patientData.address) {
+            city = patientData.address.city;
+          }
+        }
+
+        // se encontramos uma cidade e temos uma chave de API, consultamos o clima
+        if (city && process.env.WEATHER_API_KEY) {
+          try {
+            const apiKey = process.env.WEATHER_API_KEY;
+            const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},BR&appid=${apiKey}&units=metric&lang=pt_br`;
+
+            const weatherResponse = await axios.get(url);
+            const weatherMain = weatherResponse.data.weather[0].main;
+
+            // condições que consideramos como "alerta de chuva"
+            if (["Rain", "Thunderstorm", "Drizzle", "Snow"].includes(weatherMain)) {
+              appointmentObject.weatherAlert = `Alerta: Previsão de ${weatherResponse.data.weather[0].description}.`;
+            }
+          } catch (error) {
+            console.error("Falha ao buscar clima para a cidade:", city);
+          }
+        }
+
+        return appointmentObject;
+      })
+    );
+
+    return res.status(200).json(appointmentsWithWeather);
   } catch (error) {
     return res.status(500).json({ error: "Falha ao buscar agendamentos.", details: error.message });
   }
