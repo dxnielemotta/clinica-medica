@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const dbConnection = async () => {
   try {
-    const mongoURI = process.env.mongoURI;
+    const mongoURI = process.env.MONGO_URI;
 
     if (!mongoURI) {
       throw new Error("Mongo URI não foi definida no arquivo .env");
