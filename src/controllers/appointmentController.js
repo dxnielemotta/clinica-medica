@@ -1,14 +1,35 @@
 import Appointment from "../models/Appointment.js";
+import { startOfDay, endOfDay, parse, isValid, format } from "date-fns";
 
 export const createAppointment = async (req, res) => {
   try {
-    const { specialty, date } = req.body;
+    const { specialty, date, time } = req.body;
     // o id do paciente vem do middleware de autenticação (req.userId)
     const { userId } = req;
 
+    if (!specialty || !date || !time) {
+      return res.status(400).json({ error: "Especialidade, data e hora são obrigatórios." });
+    }
+
+    const combinedDateTime = `${date} ${time}`;
+    const appointmentDateTime = parse(combinedDateTime, "yyyy-MM-dd HH:mm", new Date());
+
+    if (!isValid(appointmentDateTime)) {
+      return res.status(400).json({ error: "Data ou hora inválida." });
+    }
+
+    const existingAppointment = await Appointment.findOne({
+      date: appointmentDateTime,
+      status: { $ne: "canceled" },
+    });
+
+    if (existingAppointment) {
+      return res.status(409).json({ error: "Este horário já foi agendado. Por favor, escolha outro." });
+    }
+
     const newAppointment = await Appointment.create({
       specialty,
-      date,
+      date: appointmentDateTime,
       patient: userId,
     });
 
@@ -90,5 +111,40 @@ export const deleteAppointment = async (req, res) => {
     return res.status(200).json({ message: "Agendamento cancelado com sucesso." });
   } catch (error) {
     return res.status(500).json({ error: "Falha ao cancelar agendamento.", details: error.message });
+  }
+};
+
+export const getAvailability = async (req, res) => {
+  try {
+    const { date } = req.query; // Ex: date=2025-09-13
+    if (!date) {
+      return res.status(400).json({ error: "A data é obrigatória." });
+    }
+
+    // define todos os horários de atendimento do dia
+    const allSlots = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"];
+
+    // encontra os agendamentos já marcados para o dia especificado
+    const targetDate = parse(date, "yyyy-MM-dd", new Date());
+
+    const dayStart = startOfDay(targetDate);
+    const dayEnd = endOfDay(targetDate);
+
+    const bookedAppointments = await Appointment.find({
+      date: { $gte: dayStart, $lte: dayEnd },
+      status: { $ne: "canceled" }, // não considera horários cancelados como ocupados
+    });
+
+    // extrai apenas os horários (HH:mm) dos agendamentos marcados
+    const bookedSlots = bookedAppointments.map((appointment) => {
+      return format(appointment.date, "HH:mm");
+    });
+
+    // filtra a lista completa, retornando apenas os horários que não estão na lista de agendados
+    const availableSlots = allSlots.filter((slot) => !bookedSlots.includes(slot));
+
+    return res.status(200).json(availableSlots);
+  } catch (error) {
+    return res.status(500).json({ error: "Falha ao buscar horários.", details: error.message });
   }
 };

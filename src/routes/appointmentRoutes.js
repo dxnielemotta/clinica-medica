@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createAppointment, deleteAppointment, getAppointments, updateAppointment } from "../controllers/appointmentController.js";
+import { createAppointment, deleteAppointment, getAppointments, getAvailability, updateAppointment } from "../controllers/appointmentController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 // ninguém pode acessar /appointments sem um token válido.
 router.use(authMiddleware);
 
+router.get("/availability", getAvailability);
 router.get("/", getAppointments);
 router.post("/", createAppointment);
 router.put("/:id", updateAppointment);
