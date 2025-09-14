@@ -18,7 +18,7 @@ Welcome to **Clínica Médica**, a modern fullstack web application for managing
 
 You can access a live demo of the project hosted on Vercel:
 
-- [Access the production deployment](https://seu-link-vercel.vercel.app)
+- [Access the production deployment](https://clinica-medica-ba.vercel.app/)
 
 ---
 
