@@ -112,8 +112,8 @@ clinica_medica/
 #### 1. Clone the repository
 
 ```sh
-git clone https://github.com/yourusername/clinica_medica.git
-cd clinica_medica
+git clone https://github.com/yourusername/clinica-medica.git
+cd clinica-medica
 ```
 
 #### 2. Setup the Backend
