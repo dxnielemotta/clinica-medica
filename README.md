@@ -9,10 +9,22 @@ Welcome to **Clínica Médica**, a modern fullstack web application for managing
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
+- [Live Demo on Vercel](#live-demo-on-vercel)
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
+
+---
+
+## Live Demo on Vercel
+
+You can access a live demo of the project hosted on Vercel:
+
+- [Access the production deployment](https://seu-link-vercel.vercel.app)
+
+---
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
 - [Usage](#usage)
 - [API Overview](#api-overview)
 - [Contributing](#contributing)
